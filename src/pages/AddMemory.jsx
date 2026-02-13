@@ -20,19 +20,19 @@ export default function AddMemory() {
   const [progress, setProgress] = useState(0);
   const [success, setSuccess] = useState(false);
 
+  // ✅ handle input
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ✅ handle image
   const handleImage = (file) => {
     if (!file) return;
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e) => e.preventDefault();
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -40,14 +40,24 @@ export default function AddMemory() {
     if (file) handleImage(file);
   };
 
+  // 🚀 FINAL SUBMIT (ULTRA FIXED)
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // ✅ extra safety validation
+    if (!form.title || !form.note || !form.date) {
+      alert('Please fill all required fields 💜');
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('title', form.title);
-    formData.append('note', form.note);
+    formData.append('title', form.title.trim());
+    formData.append('note', form.note.trim());
     formData.append('date', form.date);
-    if (image) formData.append('image', image);
+
+    if (image) {
+      formData.append('image', image);
+    }
 
     setUploading(true);
     setProgress(0);
@@ -56,6 +66,7 @@ export default function AddMemory() {
 
     xhr.open('POST', 'https://forever-us-backend.onrender.com/api/memories');
 
+    // ✅ progress
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
@@ -63,13 +74,27 @@ export default function AddMemory() {
       }
     };
 
+    // ✅ SUCCESS + ERROR HANDLING (VERY IMPORTANT)
     xhr.onload = () => {
       setUploading(false);
-      setSuccess(true);
 
-      setTimeout(() => {
-        navigate('/memories');
-      }, 1500);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        setSuccess(true);
+
+        // reset form
+        setForm({ title: '', note: '', date: '' });
+        setImage(null);
+        setPreview(null);
+
+        // navigate after short delay
+        setTimeout(() => {
+          navigate('/memories', { replace: true });
+          window.location.reload(); // 🔥 ensures fresh fetch
+        }, 1200);
+      } else {
+        console.error('Server error:', xhr.responseText);
+        alert('Server rejected the memory ❌');
+      }
     };
 
     xhr.onerror = () => {
@@ -77,6 +102,7 @@ export default function AddMemory() {
       alert('Upload failed ❌');
     };
 
+    // ❗ IMPORTANT: DO NOT SET HEADERS
     xhr.send(formData);
   };
 
@@ -85,7 +111,7 @@ export default function AddMemory() {
       <h2>Add New Memory 💜</h2>
 
       <form onSubmit={handleSubmit} className="memory-form glass">
-        {/* Floating Title */}
+        {/* Title */}
         <div className="floating-group">
           <input
             type="text"
@@ -97,7 +123,7 @@ export default function AddMemory() {
           <label>Memory Title</label>
         </div>
 
-        {/* Floating Note */}
+        {/* Note */}
         <div className="floating-group">
           <textarea
             name="note"
@@ -108,7 +134,7 @@ export default function AddMemory() {
           <label>Your Memory</label>
         </div>
 
-        {/* Floating Date */}
+        {/* Date */}
         <div className="floating-group">
           <input
             type="date"
@@ -120,7 +146,7 @@ export default function AddMemory() {
           <label>Date</label>
         </div>
 
-        {/* Hidden File Input */}
+        {/* Hidden File */}
         <input
           type="file"
           accept="image/*"
@@ -129,7 +155,7 @@ export default function AddMemory() {
           onChange={(e) => handleImage(e.target.files[0])}
         />
 
-        {/* Drag & Drop */}
+        {/* Drop Zone */}
         <div
           className="drop-zone"
           onDragOver={handleDragOver}
@@ -148,7 +174,7 @@ export default function AddMemory() {
           </div>
         )}
 
-        {/* Upload Progress */}
+        {/* Progress */}
         {uploading && (
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progress}%` }} />
