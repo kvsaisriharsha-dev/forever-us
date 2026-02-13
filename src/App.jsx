@@ -8,9 +8,24 @@ import AddMemory from './pages/AddMemory';
 
 import './App.css';
 
+import { AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+
 export default function App() {
+  useEffect(() => {
+    const move = (e) => {
+      document.documentElement.style.setProperty('--mx', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--my', `${e.clientY}px`);
+    };
+
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, []);
+
   const audioRef = useRef(null);
   const fileInputRef = useRef(null);
+  const location = useLocation();
 
   const [playing, setPlaying] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
@@ -34,6 +49,8 @@ export default function App() {
 
   return (
     <div className="page">
+      <div className="soft-orbs" />
+
       <nav className="navbar glass">
         <div className="logo">
           💜 <span>Forever Us</span>
@@ -73,17 +90,51 @@ export default function App() {
         </div>
       </nav>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/memories" element={<MemoryGallery />} />
-          <Route path="/add" element={<AddMemory />} />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route
+            path="/"
+            element={
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Home />
+              </motion.div>
+            }
+          />
+
+          <Route
+            path="/memories"
+            element={
+              <motion.div
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.4 }}
+              >
+                <MemoryGallery />
+              </motion.div>
+            }
+          />
+
+          <Route
+            path="/add"
+            element={
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.35 }}
+              >
+                <AddMemory />
+              </motion.div>
+            }
+          />
         </Routes>
-      </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
